@@ -18,12 +18,13 @@ export default class MainScene extends Phaser.Scene{
         this.load.audio('ak47', ['assets/soundEffects/ak47.mp3'])
         this.load.audio('bulletHit', ['assets/soundEffects/bulletHit.mp3'])
         this.load.audio('mainMusic', ['assets/soundEffects/mainMusic.mp3'])
-        this.load.audio('enemyDeath', ['assets/soundEffects/enemyDeath.mp3']);
 
         this.load.audio('death', ['assets/soundEffects/death.mp3'])
         this.load.audio('gameOver', ['assets/soundEffects/game-over.mp3'])
         this.load.audio('1up', ['assets/soundEffects/1up.mp3']);
         this.load.audio('playerHit', ['assets/soundEffects/playerHit.mp3'])
+
+        this.load.image('particleEffect', ['assets/Icon/Particle.png'])
 
         this.load.tilemapTiledJSON('map', 'assets/tiles/dungeon.json')
 
@@ -114,7 +115,7 @@ export default class MainScene extends Phaser.Scene{
             frameRate: 6,
             repeat: -1
         })
-        
+
         this.player.health = 8;
         this.player.dead = false;
 
@@ -131,6 +132,7 @@ export default class MainScene extends Phaser.Scene{
         this.physics.add.collider(this.player, this.skullEnemy)
         this.physics.add.collider(this.skullEnemy, this.layer1)
         this.physics.add.collider(this.skullEnemy, this.skullEnemy)
+
         this.player.setDepth(1);
         this.player.setScale(0.85);
 
@@ -196,13 +198,13 @@ export default class MainScene extends Phaser.Scene{
 
     spawnMethod(){
         if (this.spawnedEnemies < this.ReqenemiesOnScreen) {
-            const shuffledTiles = Phaser.Utils.Array.Shuffle(this.emptyTiles);
-            const tileCount = shuffledTiles.length;
-        
-            for (let i = 0; i < tileCount && this.spawnedEnemies < this.ReqenemiesOnScreen; i++) {
-                const randomTile = shuffledTiles[i];
-                const enemySpawn = Phaser.Math.Distance.Between(this.player.x, this.player.y, randomTile.pixelX, randomTile.pixelY);
-        
+            const shuffledTiles = Phaser.Utils.Array.Shuffle(this.emptyTiles).slice(0, this.ReqenemiesOnScreen - this.spawnedEnemies);
+            const playerX = this.player.x;
+            const playerY = this.player.y;
+          
+            for (const randomTile of shuffledTiles) {
+                const enemySpawn = Phaser.Math.Distance.Between(playerX, playerY, randomTile.pixelX, randomTile.pixelY);
+          
                 if (enemySpawn > 100) {
                     const newEnemy = this.skullEnemy.create(randomTile.pixelX, randomTile.pixelY);
                     newEnemy.setScale(0.5);
@@ -215,64 +217,128 @@ export default class MainScene extends Phaser.Scene{
     }
 
     playerMovement(){
-        let speed = 100
+        let speed = 100;
         let dashed = false;
-        let playerVelocity = new Phaser.Math.Vector2;
+        let playerVelocity = new Phaser.Math.Vector2();
+
+        const isCollided = this.collided;
+        const isPlayerDead = this.player.dead;
+
         if (Math.abs(this.player.body.velocity.x) < 1 && Math.abs(this.player.body.velocity.y) < 1) {
-            if(this.player.dead == false){
+            if (!isPlayerDead) {
                 this.player.anims.play('idle', true);
-            } else if (this.player.dead == true){
+            } else {
                 this.player.anims.play('died', true);
             }
         }
-        if((this.player.inputKeys.up.isDown) && (this.collided == false)){
-            playerVelocity.y = -70
-            this.player.anims.play('run', true)
-       
-        } else if ((this.player.inputKeys.down.isDown) && (this.collided == false)){
-            playerVelocity.y = 70
-            this.player.anims.play('run', true)
-        }
-       
-        if((this.player.inputKeys.left.isDown) && (this.collided == false)){
-            playerVelocity.x = -70
-            this.player.flipX = true
-            this.player.anims.play('run', true)
-       
-        } else if ((this.player.inputKeys.right.isDown) && (this.collided == false)){
-            playerVelocity.x = 70
-            this.player.flipX = false;
-            this.player.anims.play('run', true)
-        }
 
-        if((this.player.inputKeys.dash.isDown) && (this.collided == false) && (this.dashTimer <= 0)){
-            this.player.body.checkCollision.none = true;
-            dashed = true;
-            this.dash.play();
-            playerVelocity.normalize()
-            playerVelocity.scale(speed * 12)
-        } else {
-            playerVelocity.normalize()
-            playerVelocity.scale(speed)
-        }
+        if (!isCollided) {
+            if (this.player.inputKeys.up.isDown) {
+                playerVelocity.y = -70;
+                this.player.anims.play('run', true);
+            } else if (this.player.inputKeys.down.isDown) {
+                playerVelocity.y = 70;
+                this.player.anims.play('run', true);
+            }
 
-        this.dashTimer -= this.game.loop.delta
-        if(this.player.dead == false){
-            if(dashed == false){
-                this.player.setVelocity(playerVelocity.x,playerVelocity.y)
+            if (this.player.inputKeys.left.isDown) {
+                playerVelocity.x = -70;
+                this.player.flipX = true;
+                this.player.anims.play('run', true);
+            } else if (this.player.inputKeys.right.isDown) {
+                playerVelocity.x = 70;
+                this.player.flipX = false;
+                this.player.anims.play('run', true);
             }
-            if(dashed == true){
-                this.player.setAcceleration(playerVelocity.x,playerVelocity.y)
-                setTimeout(()=>{
-                    this.dashTimer = 1000;
-                    this.player.body.checkCollision.none = false;
-                    this.player.setAcceleration(0,0);
-                }, 300)
+
+            if (this.player.inputKeys.dash.isDown && this.dashTimer <= 0) {
+                this.player.body.checkCollision.none = true;
+                dashed = true;
+                this.dash.play();
+                playerVelocity.normalize();
+                playerVelocity.scale(speed * 12);
+            } else {
+                playerVelocity.normalize();
+                playerVelocity.scale(speed);
+            }
+
+            this.dashTimer -= this.game.loop.delta;
+
+            if (!isPlayerDead) {
+                if (!dashed) {
+                    this.player.setVelocity(playerVelocity.x, playerVelocity.y);
+                }
+
+                if (dashed) {
+                    this.player.setAcceleration(playerVelocity.x, playerVelocity.y);
+                    setTimeout(() => {
+                        this.dashTimer = 1000;
+                        this.player.body.checkCollision.none = false;
+                        this.player.setAcceleration(0, 0);
+                    }, 300);
+                }
+            } else {
+                this.player.setVelocity(0, 0);
             }
         }
-        else if (this.player.dead == true){
-            this.player.setVelocity(0,0)
-        }
+        // let speed = 100
+        // let dashed = false;
+        // let playerVelocity = new Phaser.Math.Vector2;
+        // if (Math.abs(this.player.body.velocity.x) < 1 && Math.abs(this.player.body.velocity.y) < 1) {
+        //     if(this.player.dead == false){
+        //         this.player.anims.play('idle', true);
+        //     } else if (this.player.dead == true){
+        //         this.player.anims.play('died', true);
+        //     }
+        // }
+        // if((this.player.inputKeys.up.isDown) && (this.collided == false)){
+        //     playerVelocity.y = -70
+        //     this.player.anims.play('run', true)
+       
+        // } else if ((this.player.inputKeys.down.isDown) && (this.collided == false)){
+        //     playerVelocity.y = 70
+        //     this.player.anims.play('run', true)
+        // }
+       
+        // if((this.player.inputKeys.left.isDown) && (this.collided == false)){
+        //     playerVelocity.x = -70
+        //     this.player.flipX = true
+        //     this.player.anims.play('run', true)
+       
+        // } else if ((this.player.inputKeys.right.isDown) && (this.collided == false)){
+        //     playerVelocity.x = 70
+        //     this.player.flipX = false;
+        //     this.player.anims.play('run', true)
+        // }
+
+        // if((this.player.inputKeys.dash.isDown) && (this.collided == false) && (this.dashTimer <= 0)){
+        //     this.player.body.checkCollision.none = true;
+        //     dashed = true;
+        //     this.dash.play();
+        //     playerVelocity.normalize()
+        //     playerVelocity.scale(speed * 12)
+        // } else {
+        //     playerVelocity.normalize()
+        //     playerVelocity.scale(speed)
+        // }
+
+        // this.dashTimer -= this.game.loop.delta
+        // if(!this.player.dead){
+        //     if(!dashed){
+        //         this.player.setVelocity(playerVelocity.x,playerVelocity.y)
+        //     }
+        //     if(dashed){
+        //         this.player.setAcceleration(playerVelocity.x,playerVelocity.y)
+        //         setTimeout(()=>{
+        //             this.dashTimer = 1000;
+        //             this.player.body.checkCollision.none = false;
+        //             this.player.setAcceleration(0,0);
+        //         }, 300)
+        //     }
+        // }
+        // else if (this.player.dead == true){
+        //     this.player.setVelocity(0,0)
+        // }
     }
 
 
@@ -303,19 +369,21 @@ export default class MainScene extends Phaser.Scene{
             this.player.body.checkCollision.none = false;
         }
 
-        if(this.player.x < 31.5){
+        if(this.player.x < 32.15){
             this.collided = true;
             this.player.body.checkCollision.none = true;
-            this.player.x += (this.player.x + 34.7)
-            this.player.body.acceleration.x = -this.player.body.acceleration.x
+            this.player.x += (30 - this.player.x)
+            this.player.body.velocity.y = -this.player.body.velocity.y
+            this.player.body.velocity.x = -this.player.body.velocity.x
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
-        } else if (this.player.x >= 1568.7){
+        } else if (this.player.x > 1568.7){
             this.collided = true;
             this.player.body.checkCollision.none = true;
             this.player.x += (1568.7 - this.player.x)
-            this.player.body.acceleration.x = -this.player.body.acceleration.x
+            this.player.body.velocity.y = -this.player.body.velocity.y
+            this.player.body.velocity.x = -this.player.body.velocity.x
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
@@ -325,21 +393,23 @@ export default class MainScene extends Phaser.Scene{
             this.collided = true;
             this.player.body.checkCollision.none = true;
             this.player.y += (1519- this.player.y)
-            this.player.body.acceleration.y = -this.player.body.acceleration.y
+            this.player.body.velocity.y = -this.player.body.velocity.y
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
         }
 
         if(this.player.y > 1567.5){
-            this.player.y += (1567- this.player.y)
-            this.player.body.acceleration.y = -this.player.body.acceleration.y
+            this.player.y -= (this.player.y-1567.5)
+            this.player.body.velocity.x = -this.player.body.velocity.x
+            this.player.body.velocity.y = -this.player.body.velocity.y
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
-        } else if (this.player.y <65){
-            this.player.y += (this.player.y + 25)
-            this.player.body.acceleration.y = -this.player.body.acceleration.y
+        } else if (this.player.y < 65){
+            this.player.y += (65 - this.player.y)
+            this.player.body.velocity.x = -this.player.body.velocity.x
+            this.player.body.velocity.y = -this.player.body.velocity.y
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
@@ -348,70 +418,64 @@ export default class MainScene extends Phaser.Scene{
         let angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x + this.cameras.main.scrollX, this.input.activePointer.y + this.cameras.main.scrollY);
         this.spawnMethod();
 
-        var playerX = this.player.x
-        var playerY = this.player.y
-        let playerState = this.player.dead
-        
-        this.skullEnemy.getChildren().forEach(function(child){
-            let enemyVector = new Phaser.Math.Vector2;
+        const playerX = this.player.x;
+        const playerY = this.player.y;
+        const playerState = this.player.dead;
 
-            if(playerState == false){
-                enemyVector.x = -Math.cos(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y))
-                enemyVector.y = -Math.sin(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y))
-            } else if (playerState == true){
-                enemyVector.x = Math.cos(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y))
-                enemyVector.y = Math.sin(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y))
+        this.skullEnemy.getChildren().forEach(function(child) {
+            const enemyVector = new Phaser.Math.Vector2();
+
+            if (!playerState) {
+                enemyVector.x = -Math.cos(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y));
+                enemyVector.y = -Math.sin(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y));
+            } else {
+                enemyVector.x = Math.cos(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y));
+                enemyVector.y = Math.sin(Phaser.Math.Angle.Between(playerX, playerY, child.x, child.y));
             }
 
+            enemyVector.normalize();
+            enemyVector.scale(95);
+            child.setVelocity(enemyVector.x, enemyVector.y);
 
-            enemyVector.normalize()
-            enemyVector.scale(95)
-            child.setVelocity(enemyVector.x,enemyVector.y)
+            child.flipX = enemyVector.x > 0;
 
-            if(Math.sign(enemyVector.x) == -1){
-                child.flipX = false;
-            } else{
-                child.flipX = true;
-            }
-
-            child.body.setSize(50,50)
-
-        })
+            child.body.setSize(50, 50);
+        });
 
         this.physics.add.collider(this.bulletShot, this.layer1, null, this.destroyBullet, this)
         this.physics.add.collider(this.skullEnemy, this.bulletShot, null, this.destroyEnemy, this)
         this.physics.add.collider(this.player, this.skullEnemy, null ,this.playerHit, this)
         this.playerMovement();
 
+        const worldView = this.cameras.main.worldView;
+        const inputKeys = this.weapon.inputKeys;
+
         this.bulletShot.getChildren().forEach((child) => {
-            if (child.x > this.cameras.main.worldView.right || child.x < this.cameras.main.worldView.left || child.y > this.cameras.main.worldView.bottom || child.y < this.cameras.main.worldView.top) {
+            if (child.x > worldView.right || child.x < worldView.left || child.y > worldView.bottom || child.y < worldView.top) {
                 child.destroy();
             }
         });
-        
-        //Weapon Config Stuff
+
         this.weapon.setRotation(angle);
-
         this.weapon.x = this.player.x;
-        this.weapon.y=this.player.y+2;
+        this.weapon.y = this.player.y + 2;
 
-        if((this.weapon.angle > 90 || this.weapon.angle < -90)){
+        if (Math.abs(this.weapon.angle) > 90) {
             this.player.flipX = true;
-            this.weapon.flipY =true;
+            this.weapon.flipY = true;
         } else {
-            this.player.flipX=false;
-            this.weapon.flipX=false;
-            this.weapon.flipY=false;
+            this.player.flipX = false;
+            this.weapon.flipX = false;
+            this.weapon.flipY = false;
         }
 
-
-        if(this.weapon.inputKeys.pistol.isDown){
-            this.weapon.setFrame('weapon1')
-        } else if(this.weapon.inputKeys.AK47.isDown){
-            this.weapon.setFrame('weapon2')
-        } else if(this.weapon.inputKeys.Shotgun.isDown){
-            this.weapon.setFrame('weapon3')
-        } 
+        if (inputKeys.pistol.isDown) {
+            this.weapon.setFrame('weapon1');
+        } else if (inputKeys.AK47.isDown) {
+            this.weapon.setFrame('weapon2');
+        } else if (inputKeys.Shotgun.isDown) {
+            this.weapon.setFrame('weapon3');
+        }
 
         if(this.input.activePointer.isDown && this.capableofShooting == true){
             if(this.weapon.frame.name == "weapon1"){
@@ -436,7 +500,7 @@ export default class MainScene extends Phaser.Scene{
 
     destroyEnemy(enemy, bullet){
         enemy.health --
-        this.sound.play('enemyDeath', {volume: 1});
+        this.add.particles(enemy.x, enemy.y, 'particleEffect',{speed: 1000,scale: 0.01, maxParticles:3, lifespan: {min: 100, max: 150}})
         bullet.destroy();
         if(enemy.health == 0){
             enemy.destroy();
@@ -460,10 +524,10 @@ export default class MainScene extends Phaser.Scene{
         vectoral.y = (player.y - enemy.y)
 
         vectoral.normalize();
-        vectoral.scale(10000);
+        vectoral.scale(200);
 
         this.sound.play('playerHit');
-        player.setAcceleration(vectoral.x, vectoral.y);
+        player.setVelocity(vectoral.x, vectoral.y);
 
         setTimeout(()=>{
             this.collided = false;
