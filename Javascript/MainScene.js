@@ -281,64 +281,6 @@ export default class MainScene extends Phaser.Scene{
                 this.player.setVelocity(0, 0);
             }
         }
-        // let speed = 100
-        // let dashed = false;
-        // let playerVelocity = new Phaser.Math.Vector2;
-        // if (Math.abs(this.player.body.velocity.x) < 1 && Math.abs(this.player.body.velocity.y) < 1) {
-        //     if(this.player.dead == false){
-        //         this.player.anims.play('idle', true);
-        //     } else if (this.player.dead == true){
-        //         this.player.anims.play('died', true);
-        //     }
-        // }
-        // if((this.player.inputKeys.up.isDown) && (this.collided == false)){
-        //     playerVelocity.y = -70
-        //     this.player.anims.play('run', true)
-       
-        // } else if ((this.player.inputKeys.down.isDown) && (this.collided == false)){
-        //     playerVelocity.y = 70
-        //     this.player.anims.play('run', true)
-        // }
-       
-        // if((this.player.inputKeys.left.isDown) && (this.collided == false)){
-        //     playerVelocity.x = -70
-        //     this.player.flipX = true
-        //     this.player.anims.play('run', true)
-       
-        // } else if ((this.player.inputKeys.right.isDown) && (this.collided == false)){
-        //     playerVelocity.x = 70
-        //     this.player.flipX = false;
-        //     this.player.anims.play('run', true)
-        // }
-
-        // if((this.player.inputKeys.dash.isDown) && (this.collided == false) && (this.dashTimer <= 0)){
-        //     this.player.body.checkCollision.none = true;
-        //     dashed = true;
-        //     this.dash.play();
-        //     playerVelocity.normalize()
-        //     playerVelocity.scale(speed * 12)
-        // } else {
-        //     playerVelocity.normalize()
-        //     playerVelocity.scale(speed)
-        // }
-
-        // this.dashTimer -= this.game.loop.delta
-        // if(!this.player.dead){
-        //     if(!dashed){
-        //         this.player.setVelocity(playerVelocity.x,playerVelocity.y)
-        //     }
-        //     if(dashed){
-        //         this.player.setAcceleration(playerVelocity.x,playerVelocity.y)
-        //         setTimeout(()=>{
-        //             this.dashTimer = 1000;
-        //             this.player.body.checkCollision.none = false;
-        //             this.player.setAcceleration(0,0);
-        //         }, 300)
-        //     }
-        // }
-        // else if (this.player.dead == true){
-        //     this.player.setVelocity(0,0)
-        // }
     }
 
 
@@ -491,7 +433,6 @@ export default class MainScene extends Phaser.Scene{
     
     shootAgain(){
         this.capableofShooting = true;
-        return this.capableofShooting
     }
 
     destroyBullet(bullet, layer){
@@ -531,7 +472,7 @@ export default class MainScene extends Phaser.Scene{
 
         setTimeout(()=>{
             this.collided = false;
-            player.setAcceleration(0, 0)
+            player.setVelocity(0, 0)
         }, 800)
     }
 
