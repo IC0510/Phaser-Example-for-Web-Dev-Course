@@ -285,6 +285,7 @@ export default class MainScene extends Phaser.Scene{
 
 
     update(){
+        console.log(this.player.health);
         this.healthpool.setScrollFactor(0)
         this.healthpool.setPosition(this.cameras.main.worldView.width-290,this.cameras.main.worldView.height+170)
         this.text.setPosition(this.cameras.main.worldView.width+220,this.cameras.main.worldView.height-185)
@@ -385,9 +386,9 @@ export default class MainScene extends Phaser.Scene{
             child.body.setSize(50, 50);
         });
 
+        this.physics.add.overlap(this.player, this.skullEnemy, this.overlapFix, null, this)
         this.physics.add.collider(this.bulletShot, this.layer1, null, this.destroyBullet, this)
         this.physics.add.collider(this.skullEnemy, this.bulletShot, null, this.destroyEnemy, this)
-        this.physics.add.collider(this.player, this.skullEnemy, null ,this.playerHit, this)
         this.playerMovement();
 
         const worldView = this.cameras.main.worldView;
@@ -455,26 +456,31 @@ export default class MainScene extends Phaser.Scene{
         }
     }
 
-    playerHit = (player,enemy)=>{
-        player.body.checkCollision.none = true;
-        this.player.health --
-        this.collided = true;
+    overlapFix = (player, enemy)=>{
+        if(!this.collided){
+            player.body.checkCollision.none = true;
+            this.player.health --
+            this.collided = true;
+            console.log("Overlap!")
+            let vectoral = new Phaser.Math.Vector2;
+    
+            vectoral.x = (player.x - enemy.x)
+            vectoral.y = (player.y - enemy.y)
+    
+            vectoral.normalize();
+            vectoral.scale(200);
+    
+            this.sound.play('playerHit');
+            player.setVelocity(vectoral.x, vectoral.y);
+    
+            setTimeout(()=>{
+                this.collided = false;
+                player.setVelocity(0, 0)
+            }, 800)
+        } else {
+            player.body.checkCollision.none = true;
+        }
 
-        let vectoral = new Phaser.Math.Vector2;
-
-        vectoral.x = (player.x - enemy.x)
-        vectoral.y = (player.y - enemy.y)
-
-        vectoral.normalize();
-        vectoral.scale(200);
-
-        this.sound.play('playerHit');
-        player.setVelocity(vectoral.x, vectoral.y);
-
-        setTimeout(()=>{
-            this.collided = false;
-            player.setVelocity(0, 0)
-        }, 800)
     }
 
     DeadChecker(){
