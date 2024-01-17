@@ -314,28 +314,29 @@ export default class MainScene extends Phaser.Scene{
         if(this.player.x < 32.15){
             this.collided = true;
             this.player.body.checkCollision.none = true;
-            this.player.x += (30 - this.player.x)
-            this.player.body.velocity.y = -this.player.body.velocity.y
-            this.player.body.velocity.x = -this.player.body.velocity.x
+            this.player.x += (32.15 - this.player.x)
+            this.player.setAcceleration(0,0)
+            this.player.setVelocity(220,-this.player.body.velocity.y)
             setTimeout(()=>{
                 this.collided = false;
-            }, 500)
+            }, 700)
         } else if (this.player.x > 1568.7){
             this.collided = true;
             this.player.body.checkCollision.none = true;
             this.player.x += (1568.7 - this.player.x)
-            this.player.body.velocity.y = -this.player.body.velocity.y
-            this.player.body.velocity.x = -this.player.body.velocity.x
+            this.player.setAcceleration(0,0)
+            this.player.setVelocity(-220,-this.player.body.velocity.y)
             setTimeout(()=>{
                 this.collided = false;
-            }, 500)
+            }, 700)
         }
 
         if(this.player.x > 788.17 && this.player.x < 954 && this.player.y > 1519){
             this.collided = true;
             this.player.body.checkCollision.none = true;
             this.player.y += (1519- this.player.y)
-            this.player.body.velocity.y = -this.player.body.velocity.y
+            this.player.setAcceleration(0,0)
+            this.player.setVelocity(-this.player.body.velocity.x,-220)
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
@@ -343,15 +344,15 @@ export default class MainScene extends Phaser.Scene{
 
         if(this.player.y > 1567.5){
             this.player.y -= (this.player.y-1567.5)
-            this.player.body.velocity.x = -this.player.body.velocity.x
-            this.player.body.velocity.y = -this.player.body.velocity.y
+            this.player.setAcceleration(0,0)
+            this.player.setVelocity(-this.player.body.velocity.x,-220)
             setTimeout(()=>{
                 this.collided = false;
-            }, 500)
+            }, 700)
         } else if (this.player.y < 65){
             this.player.y += (65 - this.player.y)
-            this.player.body.velocity.x = -this.player.body.velocity.x
-            this.player.body.velocity.y = -this.player.body.velocity.y
+            this.player.setAcceleration(0,0)
+            this.player.setVelocity(-this.player.body.velocity.x,220)
             setTimeout(()=>{
                 this.collided = false;
             }, 500)
