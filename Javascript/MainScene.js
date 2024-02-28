@@ -360,11 +360,12 @@ export default class MainScene extends Phaser.Scene{
         }
 
         let angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x + this.cameras.main.scrollX, this.input.activePointer.y + this.cameras.main.scrollY);
-        this.spawnMethod();
 
         const playerX = this.player.x;
         const playerY = this.player.y;
         const playerState = this.player.dead;
+
+        this.spawnMethod();
 
         this.skullEnemy.getChildren().forEach(function(child) {
             const enemyVector = new Phaser.Math.Vector2();
